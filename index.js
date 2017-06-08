@@ -103,14 +103,16 @@ const logger = function (msg, type, showTime, debug) {
 module.exports = function (options) {
     //logger仅执行一次
     think.app.once('appReady', () => {
+        think.log = logger;
+        think.addLogs = logCustom;
+        
         if (!options || !options.log) {
             return;
         }
         //日志
         let level = options.level || [];
         logConsole(level);
-        think.log = logger;
-        think.addLogs = logCustom;
+        
     });
 
     return function (ctx, next) {
