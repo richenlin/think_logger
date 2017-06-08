@@ -56,6 +56,49 @@ const logCustom = function (name, msgs) {
 
 };
 
+/**
+ * console format
+ * 
+ * @param {any} msg 
+ * @param {any} type 
+ * @param {any} showTime 
+ * @param {any} debug 
+ */
+const logger = function (msg, type, showTime, debug) {
+    debug = debug || think.app_debug || false;
+    let dateTime = `[${lib.datetime('', '')}] `;
+    let message = msg;
+    if (lib.isError(msg)) {
+        type = 'ERROR';
+        message = msg.stack;
+        ('prototype' in console.error) && console.error(msg.stack);
+    } else if (type === 'ERROR') {
+        type = 'ERROR';
+        if (!lib.isString(msg)) {
+            message = JSON.stringify(msg);
+        }
+        ('prototype' in console.error) && console.error(message);
+    } else if (type === 'WARNING') {
+        type = 'WARNING';
+        if (!lib.isString(msg)) {
+            message = JSON.stringify(msg);
+        }
+        ('prototype' in console.warn) && console.warn(message);
+    } else {
+        if (!lib.isString(msg)) {
+            message = JSON.stringify(msg);
+        }
+        if (lib.isNumber(showTime)) {
+            let _time = Date.now() - showTime;
+            message += '  ' + `${_time}ms`;
+        }
+        type = type || 'INFO';
+        //判断console.info是否被重写
+        ('prototype' in console.info) && console.info(message);
+    }
+    (debug || type === 'THINK') && console.log(`${dateTime}[${type}] ${message}`);
+};
+
 
 module.exports = function (options) {
     //logger仅执行一次
@@ -66,6 +109,7 @@ module.exports = function (options) {
         //日志
         let level = options.level || [];
         logConsole(level);
+        think.log = logger;
         think.addLogs = logCustom;
     });
 
