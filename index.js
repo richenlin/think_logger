@@ -103,7 +103,7 @@ const logger = function (msg, type, showTime, debug) {
 module.exports = function (options) {
     //logger仅执行一次
     think.app.once('appReady', () => {
-        think.addLogs = logCustom;
+        lib.define(think, 'addLogs', logCustom);
         
         if (!options || !options.log) {
             return;
