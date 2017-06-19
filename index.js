@@ -99,19 +99,27 @@ const logger = function (msg, type, showTime, debug) {
     (debug || type === 'THINK') && console.log(`${dateTime}[${type}] ${message}`);
 };
 
+/**
+ * default options
+ */
+const defaultOptions = {
+    log: true, //是否存储日志
+    level: ['warn', 'error'], //日志存储级别, info, warn, error, console类型日志有效
+};
 
 module.exports = function (options) {
+    options = options ? lib.extend(defaultOptions, options, true) : defaultOptions;
     //logger仅执行一次
     think.app.once('appReady', () => {
         lib.define(think, 'addLogs', logCustom);
-        
+
         if (!options || !options.log) {
             return;
         }
         //日志
         let level = options.level || [];
         logConsole(level);
-        
+
     });
 
     return function (ctx, next) {
