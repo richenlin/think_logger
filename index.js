@@ -65,7 +65,11 @@ const logCustom = function (name, msgs) {
  * @param {any} debug 
  */
 const logger = function (msg, type, showTime, debug) {
-    debug = debug || think.app_debug || false;
+    if (type === true) {
+        debug = true;
+        type = '';
+    }
+    debug = debug || false;
     let dateTime = `[${lib.datetime('', '')}] `;
     let message = msg;
     if (lib.isError(msg)) {
