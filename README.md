@@ -2,7 +2,7 @@
 -----
 
 [![npm version](https://badge.fury.io/js/think_logger.svg)](https://badge.fury.io/js/think_logger)
-[![Dependency Status](https://david-dm.org/richenlin/think_logger.svg)](https://david-dm.org/richenlin/think_logger)
+[![Dependency Status](https://david-dm.org/thinkkoa/think_logger.svg)](https://david-dm.org/thinkkoa/think_logger)
 
 Logger for ThinkKoa.
 
