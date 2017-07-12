@@ -5,102 +5,27 @@
  * @license    MIT
  * @version    17/5/2
  */
-
-const fs = require('fs');
-const util = require('util');
 const lib = require('think_lib');
+const logger = require('./lib/logger.js');
 
 /**
- * 
- * 
+ * 日志输出
+ * 包括格式化输出到控制台以及记录日志文件
  * @param {any} path 
- * @param {any} name 
- * @param {any} msgs 
- */
-const write = function (path, name, msgs) {
-    try {
-        let log_path = `${think.root_path}${lib.sep}logs${lib.sep}${lib.isEmpty(path) ? 'console' : path}`;
-        lib.isDir(log_path) || lib.mkDir(log_path);
-        if (!lib.isEmpty(msgs)) {
-            let file = `${log_path}${lib.sep}${name ? name + '_' : ''}${lib.datetime('', 'yyyy-mm-dd')}.log`;
-            msgs = ['[' + lib.datetime('', '') + ']'].concat([].slice.call(msgs));
-            let message = util.format.apply(null, msgs) + '\n';
-            fs.appendFile(file, message);
-        }
-    } catch (e) { }
-};
-
-/**
- * 
- * 
  * @param {any} [level=[]] 
+ * @param {boolean} [record=false] 
  */
-const logConsole = function (level = []) {
-    ['info', 'warn', 'error'].map(item => {
-        if (level.indexOf(item) > -1) {
-            console[item] = function () {
-                try {
-                    let msgs = ['[' + item.toUpperCase() + ']'].concat([].slice.call(arguments));
-                    write('', '', msgs);
-                } catch (e) { }
-            };
-        }
+const logOutput = function (path, level = [], record = false) {
+    ['info', 'warn', 'error', 'success'].map(item => {
+        console[item] = function () {
+            try {
+                logger[item](...arguments);
+                if (record && level.indexOf(item) > -1) {
+                    logger.write(path, item, arguments);
+                }
+            } catch (e) { }
+        };
     });
-};
-
-const logCustom = function (name, msgs) {
-    try {
-        msgs = ['[INFO]', lib.isString(msgs) ? msgs : JSON.stringify(msgs)];
-        write('custom', name, msgs);
-    } catch (e) { }
-
-};
-
-/**
- * console format
- * 
- * @param {any} msg 
- * @param {any} type 
- * @param {any} showTime 
- * @param {any} debug 
- */
-const logger = function (msg, type, showTime, debug) {
-    if (type === true) {
-        debug = true;
-        type = '';
-    }
-    debug = debug || false;
-    let dateTime = `[${lib.datetime('', '')}] `;
-    let message = msg;
-    if (lib.isError(msg)) {
-        type = 'ERROR';
-        message = msg.stack;
-        ('prototype' in console.error) && console.error(msg.stack);
-    } else if (type === 'ERROR') {
-        type = 'ERROR';
-        if (!lib.isString(msg)) {
-            message = JSON.stringify(msg);
-        }
-        ('prototype' in console.error) && console.error(message);
-    } else if (type === 'WARNING') {
-        type = 'WARNING';
-        if (!lib.isString(msg)) {
-            message = JSON.stringify(msg);
-        }
-        ('prototype' in console.warn) && console.warn(message);
-    } else {
-        if (!lib.isString(msg)) {
-            message = JSON.stringify(msg);
-        }
-        if (lib.isNumber(showTime)) {
-            let _time = Date.now() - showTime;
-            message += '  ' + `${_time}ms`;
-        }
-        type = type || 'INFO';
-        //判断console.info是否被重写
-        ('prototype' in console.info) && console.info(message);
-    }
-    (debug || type === 'THINK') && console.log(`${dateTime}[${type}] ${message}`);
 };
 
 /**
@@ -108,22 +33,22 @@ const logger = function (msg, type, showTime, debug) {
  */
 const defaultOptions = {
     log: true, //是否存储日志
-    level: ['warn', 'error'], //日志存储级别, info, warn, error, console类型日志有效
+    log_path: think.root_path + '/logs', //存储日志文件目录
+    log_level: ['warn', 'error'], //日志存储级别, 'info', 'warn', 'error', 'success'
 };
 
 module.exports = function (options) {
     options = options ? lib.extend(defaultOptions, options, true) : defaultOptions;
     //logger仅执行一次
     think.app.once('appReady', () => {
-        lib.define(think, 'addLogs', logCustom);
-
-        if (!options || !options.log) {
-            return;
-        }
-        //日志
-        let level = options.level || [];
-        logConsole(level);
-
+        lib.define(think, 'logger', logger);
+        let path = options.log_path || __dirname;
+        lib.define(think, 'addLogs', function(name, msgs) {
+            return logger.write(path, name, msgs);
+        });
+        //触发绑定记录日志
+        let level = options.log_level || [];
+        logOutput(path, level, options.log);
     });
 
     return function (ctx, next) {

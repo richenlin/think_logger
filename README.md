@@ -24,7 +24,8 @@ config: { //中间件配置
     ...,
     logger: {
         log: true, //是否存储日志
-        level: ['warn', 'error'], //日志存储级别, info, warn, error, console类型日志有效
+        log_path: think.root_path + '/logs', //存储日志文件目录
+        log_level: ['warn', 'error'], //日志存储级别, 'info', 'warn', 'error', 'success'
     }
 }
 ```
