@@ -4,7 +4,7 @@
 [![npm version](https://badge.fury.io/js/think_logger.svg)](https://badge.fury.io/js/think_logger)
 [![Dependency Status](https://david-dm.org/thinkkoa/think_logger.svg)](https://david-dm.org/thinkkoa/think_logger)
 
-Logger for ThinkKoa.
+Logger for ThinkKoa.Obsolete and replaced by think_trace. 已经废弃！！功能被think_trace取代!
 
 # 安装
 -----
