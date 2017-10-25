@@ -16,16 +16,88 @@ npm i think_logger
 # 使用
 -----
 
-1、logger中间件为thinkkoa内置中间件,无需在项目中创建引用。该中间件默认开启
 
-2、项目中间件配置 config/middleware.js:
+### logger(type, option, ...args)
+
+自定义控制台输出。
+
+* type 控制台输出类型,例如 THINK, HTTP等
+* option { path: path, record: record, css: 'css' } 
+    record 是否保存为日志文件
+    path 日志文件保存路径
+    css 控制台输出字符颜色,例如 white,grey,black,blue,cyan,green,magenta,red,yellow等
+* ...args 其余可变参数。不限制参数个数。类型为数组
+
+```js
+logger('custom', {css:'blue'}, ['测试内容']);
+logger('custom', {css:'green'}, ['测试：', '测试内容']);
+logger('custom', {css:'blue'}, [{"测试": "测试内容"}]);
+logger('custom', {css:'blue'}, ['测试：', '测试内容']);
+logger('custom', {css:'red'}, [new Error('测试内容')]);
 ```
-config: { //中间件配置
-    ...,
-    logger: {
-        log: true, //是否存储日志
-        log_path: think.root_path + '/logs', //存储日志文件目录
-        log_level: ['warn', 'error'], //日志存储级别, 'info', 'warn', 'error', 'success'
-    }
-}
+### think.logger.info(...args)
+
+自定义控制台输出info类型信息。
+
+* ...args 可变参数。不限制参数个数
+
+```js
+think.logger.info('测试内容');
+logger.info('测试：', '测试内容');
+logger.info({"测试": "测试内容"});
+logger.info(['测试：', '测试内容']);
+logger.info(new Error('测试内容'));
+```
+### logger.success(...args)
+
+自定义控制台输出success类型信息。
+
+* ...args 可变参数。不限制参数个数
+
+```js
+logger.success('测试内容');
+logger.success('测试：', '测试内容');
+logger.success({"测试": "测试内容"});
+logger.success(['测试：', '测试内容']);
+logger.success(new Error('测试内容'));
+```
+### logger.warn(...args)
+
+自定义控制台输出warn类型信息。
+
+* ...args 可变参数。不限制参数个数
+
+```js
+logger.warn('测试内容');
+logger.warn('测试：', '测试内容');
+logger.warn({"测试": "测试内容"});
+logger.warn(['测试：', '测试内容']);
+logger.warn(new Error('测试内容'));
+```
+### logger.error(...args)
+
+自定义控制台输出error类型信息。
+
+* ...args 可变参数。不限制参数个数
+
+```js
+logger.error('测试内容');
+logger.error('测试：', '测试内容');
+logger.error({"测试": "测试内容"});
+logger.error(['测试：', '测试内容']);
+logger.error(new Error('测试内容'));
+```
+
+### logger.write(path, name, msgs)
+
+自定义信息写入日志文件。自动按照日期切割。
+
+* path 日志保存绝对路径
+* name 日志文件名
+* msgs 接收 Error、对象、字符串等类型数据
+
+```js
+
+//写入日志 
+await logger.write(__dirname__, 'test', JSON.stringify({aa: 11}));
 ```
