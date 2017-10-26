@@ -1,10 +1,10 @@
 // https://en.wikipedia.org/wiki/ANSI_escape_code
 
 const fs = require('fs');
+const os = require('os');
 const util = require('util');
 const lib = require('think_lib');
 
-const debug = process.env.NODE_ENV === 'development' ? true : false;
 const styles = {
     'bold': ['\x1B[1m', '\x1B[22m'],
     'italic': ['\x1B[3m', '\x1B[23m'],
@@ -44,25 +44,23 @@ const styles = {
  */
 const show = function (type, css, args) {
     try {
-        let params = [], i = 0, len = args.length;
+        let params = [];
         css = css || 'grey';
-        let style = styles[css] || [];
-        params.push(style[0]);
-        params.push(`[${lib.datetime('', '')}]`);
-        params.push(`[${type.toUpperCase()}]`);
-        for (; i < len; i++) {
-            if (lib.isError(args[i])) {
-                params.push(args[i].stack);
-            } else if (typeof args[i] === 'object') {
-                params.push(JSON.stringify(args[i]));
-            } else {
-                params.push(args[i]);
-            }
+        let style = styles[css] || styles['grey'];
+        if (lib.isArray(args)) {
+            params = args;
+        } else if (lib.isError(args)) {
+            params = [args.stack];
+        } else {
+            params = [args];
         }
+        params = [style[0], `[${lib.datetime('', '')}]`, `[${type.toUpperCase()}]`].concat([].slice.call(params));
         params.push(style[1]);
         console.log.apply(null, params);
-    } catch (e) { }
-    return true;
+    } catch (e) {
+        // console.error(e.stack);
+    }
+    return null;
 };
 
 /**
@@ -73,21 +71,33 @@ const show = function (type, css, args) {
  * @param {any} args 
  * @returns 
  */
-const logger = function (type, options, args) {
-    if (debug) {
-        if (logger[type]) {
-            logger[type](...args);
-        } else if (options.css) {
-            show(type, options.css, args);
-        } else {
-            logger.info(...args);
+/*eslint-disable func-style */
+function logger(type, options = {}, args) {
+    try {
+        options = options || {};
+        // print console
+        if (!options.print) {
+            options.print = process.env.NODE_ENV === 'development' ? true : false;
         }
+        if (options.print) {
+            show(type ? type.toUpperCase() : 'INFO', options.css || 'grey', args);
+        }
+        // record log files
+        if (!options.record) {
+            options.record = process.env.LOGS ? true : false;
+        }
+        if (!options.level) {
+            options.level = process.env.LOGS_LEVEL ? process.env.LOGS_LEVEL.split(',') : ['warn', 'error'];
+        }
+        options.path = process.env.LOGS_PATH ? process.env.LOGS_PATH : os.tmpdir();
+        if (options.record && options.level.indexOf(type) > -1) {
+            logger.write(options.path, type, args);
+        }
+    } catch (e) {
+        // console.error(e.stack);
     }
-    if (options && options.record) {
-        logger.write(options.path, type, ...args);
-    }
-    return true;
-};
+    return null;
+}
 
 /**
  * write log file
@@ -98,7 +108,6 @@ const logger = function (type, options, args) {
  */
 logger.write = function (path, name, msgs) {
     try {
-        path = path || __dirname;
         if (!lib.isEmpty(msgs)) {
             lib.isDir(path) || lib.mkDir(path);
             let file = `${path}${lib.sep}${name ? name + '_' : ''}${lib.datetime('', 'yyyy-mm-dd')}.log`;
@@ -114,8 +123,22 @@ logger.write = function (path, name, msgs) {
             params = util.format.apply(null, params) + '\n';
             fs.appendFile(file, params, function () { });
         }
-    } catch (e) { }
-    return true;
+    } catch (e) {
+        // console.error(e.stack);
+    }
+    return null;
+};
+
+/**
+ * 
+ * 
+ * @param {any} type 
+ * @param {any} css 
+ * @param {any} args 
+ * @returns 
+ */
+logger.custom = function (type, css, args) {
+    return logger(type, { css: css || 'gray' }, args);
 };
 
 /**
@@ -124,10 +147,9 @@ logger.write = function (path, name, msgs) {
  * @returns 
  */
 logger.info = function () {
-    if (debug) {
-        return show('INFO', 'blue', arguments);
-    }
-    return null;
+    //判断console.xxx是否被重写
+    // ('prototype' in console.info) && console.info(message);
+    return logger('info', { css: 'blue' }, ...arguments);
 };
 
 /**
@@ -136,10 +158,7 @@ logger.info = function () {
  * @returns 
  */
 logger.success = function () {
-    if (debug) {
-        return show('SUCCESS', 'green', arguments);
-    }
-    return null;
+    return logger('success', { css: 'green' }, ...arguments);
 };
 
 /**
@@ -148,10 +167,7 @@ logger.success = function () {
  * @returns 
  */
 logger.warn = function () {
-    if (debug) {
-        return show('WARN', 'yellow', arguments);
-    }
-    return null;
+    return logger('warn', { css: 'yellow' }, ...arguments);
 };
 
 /**
@@ -160,10 +176,7 @@ logger.warn = function () {
  * @returns 
  */
 logger.error = function () {
-    if (debug) {
-        return show('ERROR', 'red', arguments);
-    }
-    return null;
+    return logger('error', { css: 'red' }, ...arguments);
 };
 
 module.exports = logger;

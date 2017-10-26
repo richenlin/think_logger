@@ -22,10 +22,11 @@ npm i think_logger
 自定义控制台输出。
 
 * type 控制台输出类型,例如 THINK, HTTP等
-* option { path: path, record: record, css: 'css' } 
+* option { print: true, css: 'blue', record: true, path: path } 
+    print 是否在控制台打印日志
+    css 控制台输出字符颜色,例如 white,grey,black,blue,cyan,green,magenta,red,yellow等
     record 是否保存为日志文件
     path 日志文件保存路径
-    css 控制台输出字符颜色,例如 white,grey,black,blue,cyan,green,magenta,red,yellow等
 * ...args 其余可变参数。不限制参数个数。类型为数组
 
 ```js
@@ -42,7 +43,6 @@ logger('custom', {css:'red'}, [new Error('测试内容')]);
 * ...args 可变参数。不限制参数个数
 
 ```js
-think.logger.info('测试内容');
 logger.info('测试：', '测试内容');
 logger.info({"测试": "测试内容"});
 logger.info(['测试：', '测试内容']);
@@ -99,5 +99,5 @@ logger.error(new Error('测试内容'));
 ```js
 
 //写入日志 
-await logger.write(__dirname__, 'test', JSON.stringify({aa: 11}));
+await logger.write(__dirname, 'test', JSON.stringify({aa: 11}));
 ```
