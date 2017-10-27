@@ -38,15 +38,12 @@ const styles = {
  * 
  * 
  * @param {any} type 
- * @param {any} css 
  * @param {any} args 
  * @returns 
  */
-const show = function (type, css, args) {
+const format = function(type, args) {
     try {
         let params = [];
-        css = css || 'grey';
-        let style = styles[css] || styles['grey'];
         if (lib.isArray(args)) {
             params = args;
         } else if (lib.isError(args)) {
@@ -54,8 +51,29 @@ const show = function (type, css, args) {
         } else {
             params = [args];
         }
-        params = [style[0], `[${lib.datetime('', '')}]`, `[${type.toUpperCase()}]`].concat([].slice.call(params));
-        params.push(style[1]);
+        params = [`[${lib.datetime('', '')}]`, `[${type.toUpperCase()}]`].concat([].slice.call(params));
+        return params;
+    } catch (e) {
+        // console.error(e.stack);
+        return '';
+    }
+};
+
+/**
+ * 
+ * 
+ * @param {any} type 
+ * @param {any} css 
+ * @param {any} args 
+ * @returns 
+ */
+const show = function (type, css, args) {
+    try {
+        let params = format(type, args);
+        css = css || 'grey';
+        let style = styles[css] || styles['grey'];
+        style[0] && params.unshift(style[0]);
+        style[1] && params.push(style[1]);
         console.log.apply(null, params);
     } catch (e) {
         // console.error(e.stack);
@@ -111,15 +129,7 @@ logger.write = function (path, name, msgs) {
         if (!lib.isEmpty(msgs)) {
             lib.isDir(path) || lib.mkDir(path);
             let file = `${path}${lib.sep}${name ? name + '_' : ''}${lib.datetime('', 'yyyy-mm-dd')}.log`;
-            let params = [];
-            if (lib.isArray(msgs)) {
-                params = msgs;
-            } else if (lib.isError(msgs)) {
-                params = [msgs.stack];
-            } else {
-                params = [msgs];
-            }
-            params = ['[' + lib.datetime('', '') + ']'].concat([].slice.call(params));
+            let params = format(name, msgs);
             params = util.format.apply(null, params) + '\n';
             fs.appendFile(file, params, function () { });
         }
@@ -158,7 +168,7 @@ logger.info = function () {
  * @returns 
  */
 logger.success = function () {
-    return logger('success', { css: 'green' }, ...arguments);
+    return logger('info', { css: 'green' }, ...arguments);
 };
 
 /**
