@@ -94,7 +94,7 @@ function logger(type, options = {}, args) {
     try {
         options = options || {};
         // print console
-        if (!options.print) {
+        if (options.print === undefined) {
             options.print = process.env.NODE_ENV === 'development' ? true : false;
         }
         if (options.print) {
@@ -148,7 +148,7 @@ logger.write = function (path, name, msgs) {
  * @returns 
  */
 logger.custom = function (type, css, args) {
-    return logger(type, { css: css || 'gray' }, args);
+    return logger(type, { css: css || 'gray', print: true }, args);
 };
 
 /**
