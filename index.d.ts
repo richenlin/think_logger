@@ -208,26 +208,28 @@ declare namespace logger {
 	 * 
 	 * @returns
 	 */
-	function info(): void;
+	function info(...args: string[]): void;
 
 	/**
 	 * log sucess info
 	 * 
 	 * @returns
 	 */
-	function success(): void;
+	function success(...args: string[]): void;
 
 	/**
 	 * log warnning
 	 * 
 	 * @returns
 	 */
-	function warn(): void;
+	function warn(...args: string[]): void;
 
 	/**
 	 * log error
 	 * 
 	 * @returns
 	 */
-	function error(): void;
+	function error(...args: string[]): void;
 }
+
+export = logger;

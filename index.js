@@ -41,7 +41,7 @@ const styles = {
  * @param {any} args 
  * @returns 
  */
-const format = function(type, args) {
+const format = function (type, args) {
     try {
         let params = [];
         if (lib.isArray(args)) {

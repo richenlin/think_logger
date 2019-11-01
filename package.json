@@ -1,11 +1,10 @@
 {
   "name": "think_logger",
-  "version": "2.0.4",
+  "version": "2.1.0",
   "description": "Logger for ThinkKoa.",
   "main": "index.js",
   "scripts": {
     "test": "npm run eslint",
-    "test-cov": "istanbul cover ./node_modules/mocha/bin/_mocha -- -t 50000 --recursive  -R spec test/",
     "prepublish": "npm test",
     "tsd": "dtsmake -s ./index.js",
     "eslint": "eslint index.js"
@@ -21,9 +20,8 @@
   "homepage": "https://github.com/thinkkoa/think_logger",
   "devDependencies": {
     "dtsmake": "0.0.10",
-    "eslint": "^6.2.1",
-    "istanbul": "^1.1.0-alpha.1",
-    "mocha": "^6.2.0"
+    "eslint": "^6.5.1",
+    "mocha": "^6.2.2"
   },
   "dependencies": {
     "think_lib": "^2.x.x"
