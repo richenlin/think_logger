@@ -36,7 +36,21 @@ logger('custom', {css:'blue'}, [{"测试": "测试内容"}]);
 logger('custom', {css:'blue'}, ['测试：', '测试内容']);
 logger('custom', {css:'red'}, [new Error('测试内容')]);
 ```
-### think.logger.info(...args)
+
+### logger.debug(...args)
+
+自定义控制台输出debug类型信息。
+
+* ...args 可变参数。不限制参数个数
+
+```js
+logger.debug('测试：', '测试内容');
+logger.debug({"测试": "测试内容"});
+logger.debug(['测试：', '测试内容']);
+logger.debug(new Error('测试内容'));
+```
+
+### logger.info(...args)
 
 自定义控制台输出info类型信息。
 
@@ -94,7 +108,7 @@ logger.error(new Error('测试内容'));
 
 * path 日志保存绝对路径
 * name 日志文件名
-* msgs 接收 Error、对象、字符串等类型数据
+* msgs 接收 Error对象、字符串等类型数据
 
 ```js
 
