@@ -204,6 +204,13 @@ declare namespace logger {
 	function custom(type: string, css: any, args: any): void;
 
 	/**
+	 * log debug trace
+	 * 
+	 * @returns
+	 */
+	function debug(...args: string[]): void;
+
+	/**
 	 * log info
 	 * 
 	 * @returns

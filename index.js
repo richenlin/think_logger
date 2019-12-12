@@ -128,7 +128,7 @@ logger.write = function (path, name, msgs) {
     try {
         if (!lib.isEmpty(msgs)) {
             lib.isDir(path) || lib.mkDir(path);
-            let file = `${path}${lib.sep}${name ? name + '_' : ''}${lib.datetime('', 'yyyy-mm-dd')}.log`;
+            let file = `${path}${lib.sep}${name ? name + '_' : ''}${lib.datetime('', 'YYYY-MM-DD')}.log`;
             let params = format(name, msgs);
             params = util.format.apply(null, params) + '\n';
             fs.appendFile(file, params, function () { });
@@ -156,6 +156,15 @@ logger.custom = function (type, css, args) {
  * 
  * @returns 
  */
+logger.debug = function () {
+    return logger('debug', { css: 'white' }, ...arguments);
+};
+
+/**
+ * log info
+ * 
+ * @returns 
+ */
 logger.info = function () {
     //判断console.xxx是否被重写
     // ('prototype' in console.info) && console.info(message);
@@ -168,7 +177,7 @@ logger.info = function () {
  * @returns 
  */
 logger.success = function () {
-    return logger('info', { css: 'green' }, ...arguments);
+    return logger('info', { css: 'green', print: true }, ...arguments);
 };
 
 /**
@@ -177,7 +186,7 @@ logger.success = function () {
  * @returns 
  */
 logger.warn = function () {
-    return logger('warn', { css: 'yellow' }, ...arguments);
+    return logger('warn', { css: 'yellow', print: true }, ...arguments);
 };
 
 /**
@@ -186,7 +195,7 @@ logger.warn = function () {
  * @returns 
  */
 logger.error = function () {
-    return logger('error', { css: 'red' }, ...arguments);
+    return logger('error', { css: 'red', print: true }, ...arguments);
 };
 
 module.exports = logger;

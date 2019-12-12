@@ -1,6 +1,6 @@
 {
   "name": "think_logger",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Logger for ThinkKoa.",
   "main": "index.js",
   "scripts": {
@@ -18,11 +18,6 @@
     "url": "https://github.com/thinkkoa/think_logger/issues"
   },
   "homepage": "https://github.com/thinkkoa/think_logger",
-  "devDependencies": {
-    "dtsmake": "0.0.10",
-    "eslint": "^6.5.1",
-    "mocha": "^6.2.2"
-  },
   "dependencies": {
     "think_lib": "^2.x.x"
   }
