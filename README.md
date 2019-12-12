@@ -23,10 +23,15 @@ npm i think_logger
 
 * type 控制台输出类型,例如 THINK, HTTP等
 * option { print: true, css: 'blue', record: true, path: path } 
+
     print 是否在控制台打印日志
+    
     css 控制台输出字符颜色,例如 white,grey,black,blue,cyan,green,magenta,red,yellow等
+    
     record 是否保存为日志文件
+    
     path 日志文件保存路径
+    
 * ...args 其余可变参数。不限制参数个数。类型为数组
 
 ```js
