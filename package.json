@@ -1,12 +1,11 @@
 {
   "name": "think_logger",
-  "version": "2.2.0",
+  "version": "2.2.4",
   "description": "Logger for ThinkKoa.",
   "main": "index.js",
   "scripts": {
     "test": "npm run eslint",
     "prepublish": "npm test",
-    "tsd": "dtsmake -s ./index.js",
     "eslint": "eslint index.js"
   },
   "engines": {
@@ -20,5 +19,8 @@
   "homepage": "https://github.com/thinkkoa/think_logger",
   "dependencies": {
     "think_lib": "^2.x.x"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0"
   }
 }

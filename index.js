@@ -44,18 +44,26 @@ const styles = {
 const format = function (type, args) {
     try {
         let params = [];
-        if (lib.isArray(args)) {
-            params = args;
-        } else if (lib.isError(args)) {
-            params = [args.stack];
-        } else {
-            params = [args];
+        switch (typeof args) {
+            case 'array':
+                params = args;
+                break;
+            case 'string':
+                params = [args];
+                break;
+            default:
+                if (args.stack) {
+                    params = [args.stack];
+                } else {
+                    params = [args];
+                }
+                break;
         }
-        params = [`[${lib.datetime('', '')}]`, `[${type.toUpperCase()}]`].concat([].slice.call(params));
+        params = [`[${lib.datetime('', '')}]`, `[${type.toUpperCase()}]`, ...params];
         return params;
     } catch (e) {
         // console.error(e.stack);
-        return '';
+        return [];
     }
 };
 
@@ -67,18 +75,18 @@ const format = function (type, args) {
  * @param {any} args 
  * @returns 
  */
-const show = function (type, css, args) {
+const show = async function (type, css, args) {
     try {
-        let params = format(type, args);
+        let params = [...args];
         css = css || 'grey';
-        let style = styles[css] || styles['grey'];
+        let style = styles[css] || styles.grey;
         style[0] && params.unshift(style[0]);
         style[1] && params.push(style[1]);
         console.log.apply(null, params);
     } catch (e) {
         // console.error(e.stack);
     }
-    return null;
+    return Promise.resolve();
 };
 
 /**
@@ -97,19 +105,20 @@ function logger(type, options = {}, args) {
         if (options.print === undefined) {
             options.print = process.env.NODE_ENV === 'development' ? true : false;
         }
+        args = format(type, args);
         if (options.print) {
             show(type ? type.toUpperCase() : 'INFO', options.css || 'grey', args);
         }
         // record log files
-        if (!options.record) {
+        if (options.record === undefined) {
             options.record = process.env.LOGS ? true : false;
         }
-        if (!options.level) {
+        if (options.level === undefined) {
             options.level = process.env.LOGS_LEVEL ? process.env.LOGS_LEVEL.split(',') : ['warn', 'error'];
         }
         options.path = process.env.LOGS_PATH ? process.env.LOGS_PATH : os.tmpdir();
         if (options.record && options.level.indexOf(type) > -1) {
-            logger.write(options.path, type, args);
+            logger.write(options.path, type, args, true);
         }
     } catch (e) {
         // console.error(e.stack);
@@ -117,22 +126,33 @@ function logger(type, options = {}, args) {
     return null;
 }
 
+
 /**
  * write log file
- * 
- * @param {any} path 
- * @param {any} name 
- * @param {any} msgs 
+ *
+ * @param {*} fpath
+ * @param {*} name
+ * @param {*} msgs
+ * @param {boolean} [formated=false]
+ * @returns
  */
-logger.write = function (path, name, msgs) {
+logger.write = async function (fpath, name, msgs, formated = false) {
     try {
-        if (!lib.isEmpty(msgs)) {
-            lib.isDir(path) || lib.mkDir(path);
-            let file = `${path}${lib.sep}${name ? name + '_' : ''}${lib.datetime('', 'YYYY-MM-DD')}.log`;
-            let params = format(name, msgs);
+        if (msgs.length > 0) {
+            const key = `LOGS_PATH_${fpath.replace(/[\/|\\\\|:]/g, '_')}`;
+            if (!process.env[key]) {
+                lib.isDir(fpath) || lib.mkDir(fpath);
+                !process.env.LOGS_PATH_EXISTS && (process.env.LOGS_PATH_EXISTS = {});
+                process.env[key] = true;
+            }
+            let params = msgs;
+            if (!formated) {
+                params = format(name, msgs);
+            }
             params = util.format.apply(null, params) + '\n';
-            fs.appendFile(file, params, function () { });
+            return fs.appendFile(`${fpath}${lib.sep}${name ? name + '_' : ''}${lib.datetime('', 'YYYY-MM-DD')}.log`, params, function () { });
         }
+        return Promise.resolve();
     } catch (e) {
         // console.error(e.stack);
     }
@@ -157,7 +177,7 @@ logger.custom = function (type, css, args) {
  * @returns 
  */
 logger.debug = function () {
-    return logger('debug', { css: 'white' }, ...arguments);
+    return logger('debug', { css: 'white', print: true }, ...arguments);
 };
 
 /**
@@ -168,7 +188,7 @@ logger.debug = function () {
 logger.info = function () {
     //判断console.xxx是否被重写
     // ('prototype' in console.info) && console.info(message);
-    return logger('info', { css: 'blue' }, ...arguments);
+    return logger('info', { css: 'blue', print: true }, ...arguments);
 };
 
 /**

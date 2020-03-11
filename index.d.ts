@@ -154,7 +154,7 @@ declare namespace styles {
  * @param args 
  * @return  
  */
-declare function format(type: string, args: any): any;
+declare function format(type: string, args: any): any[];
 
 /**
  * @param {any} type
@@ -165,7 +165,7 @@ declare function format(type: string, args: any): any;
  * @param css 
  * @param args 
  */
-declare function show(type: string, css: string, args: any): void;
+declare function show(type: string, css: string, args: any): Promise<any>;
 
 /**
  * eslint-disable func-style
@@ -190,7 +190,7 @@ declare namespace logger {
 	 * @param name 
 	 * @param msgs 
 	 */
-	function write(path: string, name: string, msgs: any): void;
+	function write(path: string, name: string, msgs: any): Promise<any>;
 
 	/**
 	 * @param {any} type
