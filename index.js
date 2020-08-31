@@ -34,6 +34,11 @@ const styles = {
 };
 // console.log('\x1B[47m\x1B[30m%s\x1B[39m\x1B[49m', 'hello') //白底黑色字
 
+const printConsole = process.env.NODE_ENV === 'development' ? true : false;
+const writeFile = process.env.LOGS ? true : false;
+const writeLevel = process.env.LOGS_LEVEL ? process.env.LOGS_LEVEL.split(',') : ['warn', 'error'];
+const writePath = process.env.LOGS_PATH ? process.env.LOGS_PATH : os.tmpdir();
+
 /**
  * 
  * 
@@ -75,7 +80,7 @@ const format = function (type, args) {
  * @param {any} args 
  * @returns 
  */
-const show = async function (type, css, args) {
+const show = function (type, css, args) {
     try {
         let params = [...args];
         css = css || 'grey';
@@ -83,10 +88,46 @@ const show = async function (type, css, args) {
         style[0] && params.unshift(style[0]);
         style[1] && params.push(style[1]);
         console.log.apply(null, params);
+        return null;
     } catch (e) {
         // console.error(e.stack);
+        return null;
     }
-    return Promise.resolve();
+};
+
+/**
+* write log file
+*
+* @param {*} fpath
+* @param {*} name
+* @param {*} msgs
+* @param {boolean} [formated=false]
+* @returns
+*/
+const write = function (fpath, name, msgs, formated = false) {
+    try {
+        if (fpath && msgs.length > 0) {
+            const key = `LOGS_PATH_${fpath.replace(/[\/|\\\\|:]/g, '_')}`;
+            if (!process.env[key]) {
+                lib.isDir(fpath) || lib.mkDir(fpath);
+                // !process.env.LOGS_PATH_EXISTS && (process.env.LOGS_PATH_EXISTS = {});
+                process.env[key] = true;
+            }
+            let params = msgs;
+            if (!formated) {
+                params = format(name, msgs);
+            }
+            params = util.format.apply(null, params) + '\n';
+            let file = `${fpath}${lib.sep}${name ? name + '_' : ''}${lib.datetime('', 'YYYY-MM-DD')}.log`;
+            fs.appendFile(file, params, function () {
+                fs.close(file, () => { });
+            });
+        }
+        return null;
+    } catch (e) {
+        // console.error(e.stack);
+        return null;
+    }
 };
 
 /**
@@ -97,125 +138,109 @@ const show = async function (type, css, args) {
  * @param {any} args 
  * @returns 
  */
-/*eslint-disable func-style */
-function logger(type, options = {}, args) {
+const print = function (type, options = {}, args) {
     try {
-        options = options || {};
-        // print console
-        if (options.print === undefined) {
-            options.print = process.env.NODE_ENV === 'development' ? true : false;
-        }
+        options = Object.assign({
+            print: printConsole,
+            record: writeFile,
+            level: writeLevel,
+            path: writePath,
+            css: 'white'
+        }, options || {});
         args = format(type, args);
+
+        // print console
         if (options.print) {
             show(type ? type.toUpperCase() : 'INFO', options.css || 'grey', args);
         }
         // record log files
-        if (options.record === undefined) {
-            options.record = process.env.LOGS ? true : false;
-        }
-        if (options.level === undefined) {
-            options.level = process.env.LOGS_LEVEL ? process.env.LOGS_LEVEL.split(',') : ['warn', 'error'];
-        }
-        options.path = process.env.LOGS_PATH ? process.env.LOGS_PATH : os.tmpdir();
         if (options.record && options.level.indexOf(type) > -1) {
-            logger.write(options.path, type, args, true);
+            write(options.path, type, args, true);
         }
+        return null;
     } catch (e) {
         // console.error(e.stack);
+        return null;
     }
-    return null;
-}
-
-
-/**
- * write log file
- *
- * @param {*} fpath
- * @param {*} name
- * @param {*} msgs
- * @param {boolean} [formated=false]
- * @returns
- */
-logger.write = async function (fpath, name, msgs, formated = false) {
-    try {
-        if (msgs.length > 0) {
-            const key = `LOGS_PATH_${fpath.replace(/[\/|\\\\|:]/g, '_')}`;
-            if (!process.env[key]) {
-                lib.isDir(fpath) || lib.mkDir(fpath);
-                !process.env.LOGS_PATH_EXISTS && (process.env.LOGS_PATH_EXISTS = {});
-                process.env[key] = true;
-            }
-            let params = msgs;
-            if (!formated) {
-                params = format(name, msgs);
-            }
-            params = util.format.apply(null, params) + '\n';
-            return fs.appendFile(`${fpath}${lib.sep}${name ? name + '_' : ''}${lib.datetime('', 'YYYY-MM-DD')}.log`, params, function () { });
-        }
-        return Promise.resolve();
-    } catch (e) {
-        // console.error(e.stack);
-    }
-    return null;
 };
 
-/**
- * 
- * 
- * @param {any} type 
- * @param {any} css 
- * @param {any} args 
- * @returns 
- */
-logger.custom = function (type, css, args) {
-    return logger(type, { css: css || 'gray', print: true }, args);
-};
+const logger = {
+    /**
+    * write log file
+    *
+    * @param {*} fpath
+    * @param {*} name
+    * @param {*} msgs
+    * @param {boolean} [formated=false]
+    * @returns
+    */
+    write: write,
 
-/**
- * log info
- * 
- * @returns 
- */
-logger.debug = function () {
-    return logger('debug', { css: 'white', print: true }, ...arguments);
-};
+    /**
+     * custom logs
+     * 
+     * @param {any} type 
+     * @param {any} css 
+     * @param {any} args 
+     * @returns 
+     */
+    custom(type, css, args) {
+        return print(type, { css: css || 'gray', print: true }, args);
+    },
+    /**
+     * log debug
+     * 
+     * @param {any} type 
+     * @param {any} css 
+     * @param {any} args 
+     * @returns 
+     */
+    debug() {
+        return print('debug', { css: 'white', print: true }, ...arguments);
+    },
+    /**
+     * log info
+     * 
+     * @returns 
+     */
+    info() {
+        //判断console.xxx是否被重写
+        // ('prototype' in console.info) && console.info(message);
+        return print('info', { css: 'blue', print: true }, ...arguments);
+    },
+    /**
+     * log sucess info
+     * 
+     * @returns 
+     */
+    success() {
+        //判断console.xxx是否被重写
+        // ('prototype' in console.info) && console.info(message);
+        return print('info', { css: 'green', print: true }, ...arguments);
+    },
+    /**
+     * log warnning
+     * 
+     * @returns 
+     */
+    warn() {
+        //判断console.xxx是否被重写
+        // ('prototype' in console.info) && console.info(message);
+        return print('warn', { css: 'yellow', print: true }, ...arguments);
+    },
 
-/**
- * log info
- * 
- * @returns 
- */
-logger.info = function () {
-    //判断console.xxx是否被重写
-    // ('prototype' in console.info) && console.info(message);
-    return logger('info', { css: 'blue', print: true }, ...arguments);
-};
+    /**
+     * log error
+     * 
+     * @returns 
+     */
+    error() {
+        //判断console.xxx是否被重写
+        // ('prototype' in console.info) && console.info(message);
+        return print('error', { css: 'red', print: true }, ...arguments);
+    },
 
-/**
- * log sucess info
- * 
- * @returns 
- */
-logger.success = function () {
-    return logger('info', { css: 'green', print: true }, ...arguments);
-};
 
-/**
- * log warnning
- * 
- * @returns 
- */
-logger.warn = function () {
-    return logger('warn', { css: 'yellow', print: true }, ...arguments);
-};
-
-/**
- * log error
- * 
- * @returns 
- */
-logger.error = function () {
-    return logger('error', { css: 'red', print: true }, ...arguments);
 };
 
 module.exports = logger;
