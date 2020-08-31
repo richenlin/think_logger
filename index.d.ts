@@ -193,15 +193,15 @@ declare namespace logger {
 	function write(path: string, name: string, msgs: any): Promise<any>;
 
 	/**
-	 * @param {any} type
-	 * @param {any} css
+	 * @param {string} type
+	 * @param {string} css
 	 * @param {any} args
 	 * @returns
 	 * @param type 
 	 * @param css 
 	 * @param args 
 	 */
-	function custom(type: string, css: any, args: any): void;
+	function custom(type: string, css: string, args: any): void;
 
 	/**
 	 * log debug trace
