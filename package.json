@@ -1,6 +1,6 @@
 {
   "name": "think_logger",
-  "version": "2.2.4",
+  "version": "2.3.0",
   "description": "Logger for ThinkKoa.",
   "main": "index.js",
   "scripts": {
