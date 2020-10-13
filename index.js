@@ -1,10 +1,13 @@
-// https://en.wikipedia.org/wiki/ANSI_escape_code
-
 const fs = require('fs');
 const os = require('os');
 const util = require('util');
 const lib = require('think_lib');
+const fsopen = util.promisify(fs.open);
+const fsappend = util.promisify(fs.appendFile);
+const fsclose = util.promisify(fs.close);
 
+
+// https://en.wikipedia.org/wiki/ANSI_escape_code
 const styles = {
     'bold': ['\x1B[1m', '\x1B[22m'],
     'italic': ['\x1B[3m', '\x1B[23m'],
@@ -33,11 +36,7 @@ const styles = {
     'yellowBG': ['\x1B[43m', '\x1B[49m']
 };
 // console.log('\x1B[47m\x1B[30m%s\x1B[39m\x1B[49m', 'hello') //白底黑色字
-
 const printConsole = process.env.NODE_ENV === 'development' ? true : false;
-const writeFile = process.env.LOGS ? true : false;
-const writeLevel = process.env.LOGS_LEVEL ? process.env.LOGS_LEVEL.split(',') : ['warn', 'error'];
-const writePath = process.env.LOGS_PATH ? process.env.LOGS_PATH : os.tmpdir();
 
 /**
  * 
@@ -64,7 +63,14 @@ const format = function (type, args) {
                 }
                 break;
         }
+
         params = [`[${lib.datetime('', '')}]`, `[${type.toUpperCase()}]`, ...params];
+        if (type === 'debug') {
+            Error.captureStackTrace(logger);
+            const matchResult = (logger.stack).match(/\(.*?\)/g) || [];
+            params.push(matchResult[3] || '');
+        }
+
         return params;
     } catch (e) {
         // console.error(e.stack);
@@ -72,25 +78,42 @@ const format = function (type, args) {
     }
 };
 
+
 /**
  * 
  * 
  * @param {any} type 
- * @param {any} css 
+ * @param {object} options 
  * @param {any} args 
  * @returns 
  */
-const show = function (type, css, args) {
+const print = function (type, options = {}, args) {
     try {
-        let params = [...args];
-        css = css || 'grey';
-        let style = styles[css] || styles.grey;
-        style[0] && params.unshift(style[0]);
-        style[1] && params.push(style[1]);
-        console.log.apply(null, params);
+        const opt = {
+            print: printConsole,
+            record: process.env.LOGS,
+            level: process.env.LOGS_LEVEL ? process.env.LOGS_LEVEL : 'warn, error',
+            path: process.env.LOGS_PATH ? process.env.LOGS_PATH : os.tmpdir(),
+            css: 'white'
+        };
+        options = Object.assign(opt, options || {});
+
+        args = format(type, args);
+        // print console
+        if (options.print) {
+            const css = options.css || 'grey';
+            const style = styles[css] || styles.grey;
+            console.log.apply(null, [style[0] || '', ...args, style[1]] || '');
+        }
+        // record log files
+        if (options.record === 'true' && options.level.indexOf(type) > -1) {
+            (function (p, t, a, f) {
+                return write(p, t, a, f);
+            })(options.path, type, args, true);
+        }
         return null;
     } catch (e) {
-        // console.error(e.stack);
+        console.error(e);
         return null;
     }
 };
@@ -104,62 +127,26 @@ const show = function (type, css, args) {
 * @param {boolean} [formated=false]
 * @returns
 */
-const write = function (fpath, name, msgs, formated = false) {
+const write = async function (fpath, name, msgs, formated = false) {
     try {
-        if (fpath && msgs.length > 0) {
-            const key = `LOGS_PATH_${fpath.replace(/[\/|\\\\|:]/g, '_')}`;
-            if (!process.env[key]) {
-                lib.isDir(fpath) || lib.mkDir(fpath);
-                // !process.env.LOGS_PATH_EXISTS && (process.env.LOGS_PATH_EXISTS = {});
-                process.env[key] = true;
+        if (fpath) {
+            if (!lib.isDir(fpath)) {
+                lib.mkDir(fpath);
             }
             let params = msgs;
             if (!formated) {
                 params = format(name, msgs);
             }
-            params = util.format.apply(null, params) + '\n';
             let file = `${fpath}${lib.sep}${name ? name + '_' : ''}${lib.datetime('', 'YYYY-MM-DD')}.log`;
-            fs.appendFile(file, params, function () {
-                fs.close(file, () => { });
-            });
+            const fd = await fsopen(file, 'a');
+            await fsappend(fd, `${util.format.apply(null, params)}\n`, 'utf8');
+            await fsclose(fd);
         }
+        // tslint:disable-next-line: no-null-keyword
         return null;
-    } catch (e) {
-        // console.error(e.stack);
-        return null;
-    }
-};
-
-/**
- * 
- * 
- * @param {any} type 
- * @param {object} options 
- * @param {any} args 
- * @returns 
- */
-const print = function (type, options = {}, args) {
-    try {
-        options = Object.assign({
-            print: printConsole,
-            record: writeFile,
-            level: writeLevel,
-            path: writePath,
-            css: 'white'
-        }, options || {});
-        args = format(type, args);
-
-        // print console
-        if (options.print) {
-            show(type ? type.toUpperCase() : 'INFO', options.css || 'grey', args);
-        }
-        // record log files
-        if (options.record && options.level.indexOf(type) > -1) {
-            write(options.path, type, args, true);
-        }
-        return null;
-    } catch (e) {
-        // console.error(e.stack);
+    } catch (err) {
+        console.error(err);
+        // tslint:disable-next-line: no-null-keyword
         return null;
     }
 };
@@ -196,7 +183,7 @@ const logger = {
      * @returns 
      */
     debug() {
-        return print('debug', { css: 'white', print: true }, ...arguments);
+        return print('debug', { css: 'blue', print: true }, ...arguments);
     },
     /**
      * log info
@@ -206,7 +193,7 @@ const logger = {
     info() {
         //判断console.xxx是否被重写
         // ('prototype' in console.info) && console.info(message);
-        return print('info', { css: 'blue', print: true }, ...arguments);
+        return print('info', { css: 'white', print: true }, ...arguments);
     },
     /**
      * log sucess info
