@@ -1,6 +1,6 @@
 {
   "name": "think_logger",
-  "version": "2.4.0",
+  "version": "2.6.0",
   "description": "Logger for ThinkKoa.",
   "main": "index.js",
   "scripts": {
@@ -21,6 +21,6 @@
     "think_lib": "^2.x.x"
   },
   "devDependencies": {
-    "eslint": "^6.8.0"
+    "eslint": "^7.12.1"
   }
 }

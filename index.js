@@ -36,7 +36,6 @@ const styles = {
     'yellowBG': ['\x1B[43m', '\x1B[49m']
 };
 // console.log('\x1B[47m\x1B[30m%s\x1B[39m\x1B[49m', 'hello') //白底黑色字
-const printConsole = process.env.NODE_ENV === 'development' ? true : false;
 
 /**
  * 
@@ -90,7 +89,7 @@ const format = function (type, args) {
 const print = function (type, options = {}, args) {
     try {
         const opt = {
-            print: printConsole,
+            print: process.env.NODE_ENV === 'development' ? true : false,
             record: process.env.LOGS,
             level: process.env.LOGS_LEVEL ? process.env.LOGS_LEVEL : 'warn, error',
             path: process.env.LOGS_PATH ? process.env.LOGS_PATH : os.tmpdir(),
@@ -98,9 +97,9 @@ const print = function (type, options = {}, args) {
         };
         options = Object.assign(opt, options || {});
 
-        args = format(type, args);
         // print console
         if (options.print) {
+            args = format(type, args);
             const css = options.css || 'grey';
             const style = styles[css] || styles.grey;
             console.log.apply(null, [style[0] || '', ...args, style[1]] || '');
@@ -109,7 +108,7 @@ const print = function (type, options = {}, args) {
         if (options.record === 'true' && options.level.indexOf(type) > -1) {
             (function (p, t, a, f) {
                 return write(p, t, a, f);
-            })(options.path, type, args, true);
+            })(options.path, type, args, options.print);
         }
         return null;
     } catch (e) {
@@ -172,7 +171,7 @@ const logger = {
      * @returns 
      */
     custom(type, css, args) {
-        return print(type, { css: css || 'gray', print: true }, args);
+        return print(type, { css: css || 'gray' }, args);
     },
     /**
      * log debug
@@ -183,7 +182,7 @@ const logger = {
      * @returns 
      */
     debug() {
-        return print('debug', { css: 'blue', print: true }, ...arguments);
+        return print('debug', { css: 'blue' }, ...arguments);
     },
     /**
      * log info
@@ -193,7 +192,7 @@ const logger = {
     info() {
         //判断console.xxx是否被重写
         // ('prototype' in console.info) && console.info(message);
-        return print('info', { css: 'white', print: true }, ...arguments);
+        return print('info', { css: 'white' }, ...arguments);
     },
     /**
      * log sucess info
@@ -203,7 +202,7 @@ const logger = {
     success() {
         //判断console.xxx是否被重写
         // ('prototype' in console.info) && console.info(message);
-        return print('info', { css: 'green', print: true }, ...arguments);
+        return print('info', { css: 'green' }, ...arguments);
     },
     /**
      * log warnning
@@ -213,7 +212,7 @@ const logger = {
     warn() {
         //判断console.xxx是否被重写
         // ('prototype' in console.info) && console.info(message);
-        return print('warn', { css: 'yellow', print: true }, ...arguments);
+        return print('warn', { css: 'yellow' }, ...arguments);
     },
 
     /**
@@ -224,7 +223,7 @@ const logger = {
     error() {
         //判断console.xxx是否被重写
         // ('prototype' in console.info) && console.info(message);
-        return print('error', { css: 'red', print: true }, ...arguments);
+        return print('error', { css: 'red' }, ...arguments);
     },
 
 
