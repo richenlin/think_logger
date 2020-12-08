@@ -21,6 +21,6 @@
     "think_lib": "^2.x.x"
   },
   "devDependencies": {
-    "eslint": "^7.12.1"
+    "eslint": "^7.14.0"
   }
 }
